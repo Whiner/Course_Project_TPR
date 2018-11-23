@@ -1,4 +1,4 @@
-package org.donntu.tpr;
+package org.donntu.tpr.random;
 
 public class RandomGeneratorConstants {
     public final static double M_PRODUCT_1_STORE_1 = 30;

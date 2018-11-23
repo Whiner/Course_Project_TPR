@@ -1,4 +1,4 @@
-package org.donntu.tpr;
+package org.donntu.tpr.modes;
 
 public enum DeliveryMode {
     ONE_PRODUCT_ONE_STORE,

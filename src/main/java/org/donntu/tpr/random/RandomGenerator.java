@@ -1,4 +1,4 @@
-package org.donntu.tpr;
+package org.donntu.tpr.random;
 
 import java.util.Random;
 

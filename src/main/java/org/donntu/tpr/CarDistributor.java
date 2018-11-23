@@ -1,9 +1,15 @@
 package org.donntu.tpr;
 
+import org.donntu.tpr.modes.CarStatus;
+import org.donntu.tpr.modes.DeliveryMode;
+import org.donntu.tpr.random.RandomGenerator;
+import org.donntu.tpr.targets.Bakery;
+import org.donntu.tpr.targets.StoreManager;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.donntu.tpr.RandomGeneratorConstants.*;
+import static org.donntu.tpr.random.RandomGeneratorConstants.*;
 
 public class CarDistributor {
     private RandomGenerator randomGenerator = new RandomGenerator();
@@ -11,19 +17,15 @@ public class CarDistributor {
 
     private List<Car> cars = new ArrayList<>();
 
-    private final int STORES_COUNT = 6;
-    private int nextStore = 0;
-    private List<Store> stores = new ArrayList<>();
+    private StoreManager storeManager;
 
-    public CarDistributor(int carsCount, int simultaneousCarLoadingCount) {
+    public CarDistributor(int carsCount, int simultaneousCarLoadingCount, int storesCount) {
         for (int i = 0; i < carsCount; i++) {
-            Car car = new Car(CarStatus.WAITING);
+            Car car = new Car(CarStatus.LOAD_WAITING);
             car.setId((i + 1) + "");
             cars.add(car);
         }
-        for (int i = 0; i < STORES_COUNT; i++) {
-            stores.add(new Store("" + (i + 1)));
-        }
+        storeManager = new StoreManager(storesCount);
         bakery = new Bakery(simultaneousCarLoadingCount);
     }
 
@@ -41,7 +43,6 @@ public class CarDistributor {
             redistributeCars();
             lastMinutes -= lessRemainingTime;
         }
-        System.out.println("Остаток " + lastMinutes);
     }
 
     private void redistributeCars() throws Exception {
@@ -64,35 +65,35 @@ public class CarDistributor {
                                 car.addCurrentWaitingTimeToTotal();
                                 bakery.addCar(car);
                             } else {
-                                car.setStatus(CarStatus.WAITING);
+                                car.setStatus(CarStatus.LOAD_WAITING);
                                 car.printStatus();
                                 continue;
                             }
                             break;
                         case MOVING_TO_FIRST_STORE:
                             car.setRemainingTime(randomGenerator.getExpY(M_MOVING_B_S));
-                            car.setStoreTargetIndex(getNextStore());
+                            car.setStoreTargetIndex(storeManager.getNextStore());
                             checkCrash(car);
                             break;
                         case UNLOADING_FIRST:
                             car.setRemainingTime(randomGenerator.getExpY(M_UNLOADING));
-                            stores.get(car.getStoreTargetIndex()).addToQueue(car);
+                            storeManager.getStore(car.getStoreTargetIndex()).addToQueue(car);
                             break;
                         case MOVING_TO_SECOND_STORE:
                             car.setRemainingTime(randomGenerator.getExpY(M_MOVING_S_S));
-                            car.setStoreTargetIndex(getNextStore());
+                            car.setStoreTargetIndex(storeManager.getNextStore());
                             checkCrash(car);
                             break;
                         case UNLOADING_SECOND:
                             car.setRemainingTime(randomGenerator.getExpY(M_UNLOADING));
-                            stores.get(car.getStoreTargetIndex()).addToQueue(car);
+                            storeManager.getStore(car.getStoreTargetIndex()).addToQueue(car);
                             break;
                         case MOVING_TO_BAKERY:
                             car.setDeliveryMode(null);
                             car.setRemainingTime(randomGenerator.getExpY(M_MOVING_S_B));
                             checkCrash(car);
                             break;
-                        case WAITING:
+                        case LOAD_WAITING:
                             break;
                         case REPAIRING:
                             break;
@@ -108,14 +109,12 @@ public class CarDistributor {
                 car -> !car.getStatus().equals(CarStatus.UNLOADING_FIRST)
                         && !car.getStatus().equals(CarStatus.UNLOADING_SECOND)
                         && !car.getStatus().equals(CarStatus.LOADING)
-                        && !car.getStatus().equals(CarStatus.WAITING)
+                        && !car.getStatus().equals(CarStatus.LOAD_WAITING)
         ).forEach(car -> car.subtractTime(minutes));
-        cars.stream().filter(car -> car.getStatus().equals(CarStatus.WAITING))
-                .forEach(car -> car.addWaitingTime(minutes));
+        cars.stream().filter(car -> car.getStatus().equals(CarStatus.LOAD_WAITING))
+                .forEach(car -> car.addCurrentWaitingTime(minutes));
         bakery.subtractTime(minutes);
-        for (Store store : stores) {
-            store.subtractTime(minutes);
-        }
+        storeManager.subtractTime(minutes);
     }
 
     private boolean checkCrash(Car car) {
@@ -126,14 +125,14 @@ public class CarDistributor {
         return false;
     }
 
-    private int getNextStore() {
-        if (nextStore + 1 >= STORES_COUNT) {
-            nextStore = 1;
-        } else {
-            nextStore++;
+    public double getAvgWaitingTime() {
+        double totalWaitingTime = 0;
+        for (Car car : cars) {
+            totalWaitingTime += car.getTotalWaitingTime();
         }
-        return nextStore;
+        return totalWaitingTime / cars.size();
     }
+
 
     private void fillCarParamsForBakery(Car car) throws Exception {
         selectDeliveryMode(car);
@@ -190,12 +189,4 @@ public class CarDistributor {
         }
     }
 
-    private Car getWaitingCar() {
-        for (Car car : cars) {
-            if (car.getStatus().equals(CarStatus.WAITING)) {
-                return car;
-            }
-        }
-        return null;
-    }
 }

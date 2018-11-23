@@ -1,4 +1,7 @@
-package org.donntu.tpr;
+package org.donntu.tpr.targets;
+
+import org.donntu.tpr.Car;
+import org.donntu.tpr.modes.CarStatus;
 
 import java.util.ArrayList;
 import java.util.List;
