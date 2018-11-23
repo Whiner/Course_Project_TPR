@@ -25,7 +25,7 @@ public class Bakery {
         return loadingCars.contains(car);
     }
 
-    public List<Car> substractTime(double minutes) {
+    public List<Car> subtractTime(double minutes) {
         List<Car> removed = new ArrayList<>();
         loadingCars.forEach(car -> {
             car.subtractTime(minutes);

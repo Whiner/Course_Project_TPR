@@ -18,5 +18,7 @@ public class RandomGeneratorConstants {
 
     public final static int DEFAULT_N = 20;
 
+    public static final double M_REPAIRING = 30;
 
+    public static double CRASH_CHANCE = 0.05;
 }

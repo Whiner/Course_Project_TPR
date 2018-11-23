@@ -1,9 +1,7 @@
 package org.donntu.tpr;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.donntu.tpr.RandomGeneratorConstants.*;
 
@@ -11,87 +9,130 @@ public class CarDistributor {
     private RandomGenerator randomGenerator = new RandomGenerator();
     private Bakery bakery;
 
-    private int carsCount;
-    private List<Car> cars;
-
-    private double lastMinutes;
+    private List<Car> cars = new ArrayList<>();
 
     private final int STORES_COUNT = 6;
     private int nextStore = 0;
-    private List<Store> stores;
+    private List<Store> stores = new ArrayList<>();
 
     public CarDistributor(int carsCount, int simultaneousCarLoadingCount) {
-        this.carsCount = carsCount;
-        cars = new ArrayList<>(carsCount);
-        stores = new ArrayList<>(STORES_COUNT);
-        Collections.fill(cars, new Car(CarStatus.WAITING));
-        Collections.fill(stores, new Store());
+        for (int i = 0; i < carsCount; i++) {
+            Car car = new Car(CarStatus.WAITING);
+            car.setId((i + 1) + "");
+            cars.add(car);
+        }
+        for (int i = 0; i < STORES_COUNT; i++) {
+            stores.add(new Store("" + (i + 1)));
+        }
         bakery = new Bakery(simultaneousCarLoadingCount);
     }
 
     public void start(double minutes) throws Exception {
-        this.lastMinutes = minutes;
+        double lastMinutes = minutes;
         redistributeCars();
+        double lessRemainingTime;
         while (lastMinutes > 0) {
-            double lessRemainingTime = getLessRemainingTime();
+            lessRemainingTime = getLessRemainingTime();
+            if (lastMinutes < lessRemainingTime) {
+                lessRemainingTime = lastMinutes;
+            }
+            System.out.printf("-------------------- Прошло %4.2f минуты --------------------\n", lessRemainingTime);
             subtractTime(lessRemainingTime);
             redistributeCars();
             lastMinutes -= lessRemainingTime;
+        }
+        System.out.println("Остаток " + lastMinutes);
+    }
+
+    private void redistributeCars() throws Exception {
+        for (Car car : cars) {
+            boolean isRepaired;
+            System.out.print("+ ");
+            if (car.getRemainingTime() <= 0) {
+                isRepaired = car.getStatus() == CarStatus.REPAIRING;
+                CarStatus status = car.nextStatus();
+                if (status == null) {
+                    throw new Exception("Статус не указан для машины " + car.getId());
+                }
+                if (!isRepaired) {
+                    switch (status) {
+                        case LOADING:
+                            if (bakery.isHaveFreeChannel()) {
+                                if (car.getDeliveryMode() == null) {
+                                    fillCarParamsForBakery(car);
+                                }
+                                car.addCurrentWaitingTimeToTotal();
+                                bakery.addCar(car);
+                            } else {
+                                car.setStatus(CarStatus.WAITING);
+                                car.printStatus();
+                                continue;
+                            }
+                            break;
+                        case MOVING_TO_FIRST_STORE:
+                            car.setRemainingTime(randomGenerator.getExpY(M_MOVING_B_S));
+                            car.setStoreTargetIndex(getNextStore());
+                            checkCrash(car);
+                            break;
+                        case UNLOADING_FIRST:
+                            car.setRemainingTime(randomGenerator.getExpY(M_UNLOADING));
+                            stores.get(car.getStoreTargetIndex()).addToQueue(car);
+                            break;
+                        case MOVING_TO_SECOND_STORE:
+                            car.setRemainingTime(randomGenerator.getExpY(M_MOVING_S_S));
+                            car.setStoreTargetIndex(getNextStore());
+                            checkCrash(car);
+                            break;
+                        case UNLOADING_SECOND:
+                            car.setRemainingTime(randomGenerator.getExpY(M_UNLOADING));
+                            stores.get(car.getStoreTargetIndex()).addToQueue(car);
+                            break;
+                        case MOVING_TO_BAKERY:
+                            car.setDeliveryMode(null);
+                            car.setRemainingTime(randomGenerator.getExpY(M_MOVING_S_B));
+                            checkCrash(car);
+                            break;
+                        case WAITING:
+                            break;
+                        case REPAIRING:
+                            break;
+                    }
+                }
+            }
+            car.printStatus();
         }
     }
 
     private void subtractTime(double minutes) {
         cars.stream().filter(
-                car -> !car.getStatus().equals(CarStatus.UNLOADING)
+                car -> !car.getStatus().equals(CarStatus.UNLOADING_FIRST)
+                        && !car.getStatus().equals(CarStatus.UNLOADING_SECOND)
                         && !car.getStatus().equals(CarStatus.LOADING)
+                        && !car.getStatus().equals(CarStatus.WAITING)
         ).forEach(car -> car.subtractTime(minutes));
-        bakery.substractTime(minutes);
+        cars.stream().filter(car -> car.getStatus().equals(CarStatus.WAITING))
+                .forEach(car -> car.addWaitingTime(minutes));
+        bakery.subtractTime(minutes);
         for (Store store : stores) {
             store.subtractTime(minutes);
         }
     }
 
-    private void redistributeCars() throws Exception {
-        boolean isLastCarAddedToBakery = true;
-        for (int i = 0; i < cars.size(); i++) {
-            if (cars.get(i).getRemainingTime() <= 0) {
-                CarStatus nextStatus = CarStatus.nextStatus(cars.get(i).getStatus());
-                if (nextStatus == null) {
-                    throw new Exception("Статус не указан для машины " + cars.get(i).getId());
-                }
-                switch (nextStatus) {
-                    case LOADING:
-                        if (isLastCarAddedToBakery) {
-                            fillCarParamsForBakery(cars.get(i));
-                            isLastCarAddedToBakery = bakery.addCar(cars.get(i));
-                        }
-                        break;
-                    case MOVING_TO_STORE:
-                        if (!bakery.isOnLoading(cars.get(i))) {
-                            double remainingTime = Math.abs(cars.get(i).getRemainingTime());
-                            cars.get(i).setStatus(CarStatus.MOVING_TO_STORE);
-                            cars.get(i).setRemainingTime(randomGenerator.getExpY(M_MOVING_B_S) - remainingTime);
-                        }
-                        break;
-                    case UNLOADING:
-                        break;
-                    case MOVING_TO_SECOND_STORE:
-                        if (!cars.get(i).getDeliveryMode().equals(DeliveryMode.ONE_PRODUCT_TWO_STORES)) {
-                            cars.get(i).setStatus(CarStatus.MOVING_TO_SECOND_STORE);
-                            i--;
-                            continue;
-                        }
-                        break;
-                    case MOVING_TO_BAKERY:
-                        break;
-                    case WAITING:
-                        break;
-                }
-                if (cars.get(i).getRemainingTime() <= 0) {
-                    i--;
-                }
-            }
+    private boolean checkCrash(Car car) {
+        if (randomGenerator.getKcu() <= CRASH_CHANCE) {
+            car.crash(randomGenerator.getExpY(M_REPAIRING));
+            return true;
         }
+        return false;
+    }
+
+    private int getNextStore() {
+        if (nextStore + 1 >= STORES_COUNT) {
+            nextStore = 1;
+        } else {
+            nextStore++;
+        }
+        return nextStore;
     }
 
     private void fillCarParamsForBakery(Car car) throws Exception {
@@ -102,35 +143,13 @@ public class CarDistributor {
     private double getLessRemainingTime() {
         double min = 1E10;
         for (Car car : cars) {
-            if (car.getRemainingTime() < min) {
+            if (car.getRemainingTime() < min && car.getRemainingTime() > 0) {
                 min = car.getRemainingTime();
             }
         }
         return min;
     }
 
-    private boolean putCarsOnLoadingChannels() throws Exception {
-        boolean isAtLeastOneAdded = false;
-        for (int i = 0; i < bakery.getSimultaneousCarLoadingCount(); i++) {
-            Car waitingCar = getWaitingCar();
-            if (waitingCar != null) {
-                selectDeliveryMode(waitingCar);
-                selectLoadingTime(waitingCar);
-                boolean isCarAdded = bakery.addCar(waitingCar);
-                if (!isCarAdded) {
-                    break;
-                }
-                isAtLeastOneAdded = true;
-            } else {
-                break;
-            }
-        }
-        return isAtLeastOneAdded;
-    }
-
-    private List<Car> getByStatus(CarStatus status) {
-        return cars.stream().filter(car -> car.getStatus() == status).collect(Collectors.toList());
-    }
 
     private void selectLoadingTime(Car car) throws Exception {
         switch (car.getDeliveryMode()) {
