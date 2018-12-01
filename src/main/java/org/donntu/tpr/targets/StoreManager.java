@@ -45,4 +45,18 @@ public class StoreManager {
         return nextStore;
     }
 
+    public double getAvgStoreWaitingTime() {
+        double waitingTime = 0;
+        for (Store store : stores) {
+            waitingTime += store.getStoreWaitingTime();
+        }
+        return waitingTime / stores.size();
+    }
+
+    public void resetWaitingTime() {
+        for (Store store : stores) {
+            store.resetWaitTime();
+        }
+    }
+
 }

@@ -9,6 +9,7 @@ import java.util.List;
 public class Bakery {
     private List<Car> loadingCars = new ArrayList<>();
     private int simultaneousCarLoadingCount;
+    private double waitingTime;
 
     public Bakery(int simultaneousCarLoadingCount) {
         this.simultaneousCarLoadingCount = simultaneousCarLoadingCount;
@@ -30,13 +31,17 @@ public class Bakery {
 
     public List<Car> subtractTime(double minutes) {
         List<Car> removed = new ArrayList<>();
-        loadingCars.forEach(car -> {
-            car.subtractTime(minutes);
-            if (car.getRemainingTime() <= 0) {
-                removed.add(car);
-            }
-        });
-        removed.forEach(car -> loadingCars.remove(car));
+        if (loadingCars.isEmpty()) {
+            waitingTime += minutes;
+        } else {
+            loadingCars.forEach(car -> {
+                car.subtractTime(minutes);
+                if (car.getRemainingTime() <= 0) {
+                    removed.add(car);
+                }
+            });
+            removed.forEach(car -> loadingCars.remove(car));
+        }
         return removed;
     }
 
@@ -46,5 +51,13 @@ public class Bakery {
 
     public int getSimultaneousCarLoadingCount() {
         return simultaneousCarLoadingCount;
+    }
+
+    public void resetWaitingTime() {
+        this.waitingTime = 0;
+    }
+
+    public double getAvgWaitingTime() {
+        return waitingTime / simultaneousCarLoadingCount;
     }
 }

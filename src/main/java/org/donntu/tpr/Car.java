@@ -1,10 +1,12 @@
 package org.donntu.tpr;
 
+import lombok.Data;
 import org.donntu.tpr.modes.CarStatus;
 import org.donntu.tpr.modes.DeliveryMode;
 
 import static org.donntu.tpr.modes.CarStatus.*;
 
+@Data
 public class Car {
     private CarStatus status;
     private DeliveryMode deliveryMode;
@@ -23,54 +25,22 @@ public class Car {
 
     private boolean isQueueWaiting = false;
 
+    private int transactionsCount = 0;
+
+    public void addTransaction() {
+        this.transactionsCount++;
+    }
+
+    public void resetTransactions() {
+        this.transactionsCount = 0;
+    }
+
     public Car(CarStatus status) {
         this.status = status;
     }
 
-
-    public CarStatus getStatus() {
-        return status;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setStatus(CarStatus status) {
-        this.status = status;
-    }
-
-    public DeliveryMode getDeliveryMode() {
-        return deliveryMode;
-    }
-
-    public void setDeliveryMode(DeliveryMode deliveryMode) {
-        this.deliveryMode = deliveryMode;
-    }
-
-
     public void subtractTime(double time) {
         this.remainingTime -= time;
-    }
-
-    public boolean isQueueWaiting() {
-        return isQueueWaiting;
-    }
-
-    public void setQueueWaiting(boolean queueWaiting) {
-        isQueueWaiting = queueWaiting;
-    }
-
-    public double getRemainingTime() {
-        return remainingTime;
-    }
-
-    public void setRemainingTime(double remainingTime) {
-        this.remainingTime = remainingTime;
     }
 
     public void addCurrentWaitingTime(double minutes) {
@@ -85,18 +55,6 @@ public class Car {
         this.totalWaitingTime += currentWaitingTime;
         currentWaitingTime = 0;
         isQueueWaiting = false;
-    }
-
-    public double getTotalWaitingTime() {
-        return totalWaitingTime;
-    }
-
-    public void setStoreTargetIndex(int storeTargetIndex) {
-        this.storeTargetIndex = storeTargetIndex;
-    }
-
-    public int getStoreTargetIndex() {
-        return storeTargetIndex;
     }
 
     public void crash(double repairTime) {

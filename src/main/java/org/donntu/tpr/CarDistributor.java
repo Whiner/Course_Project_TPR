@@ -1,5 +1,6 @@
 package org.donntu.tpr;
 
+import lombok.Getter;
 import org.donntu.tpr.modes.CarStatus;
 import org.donntu.tpr.modes.DeliveryMode;
 import org.donntu.tpr.random.RandomGenerator;
@@ -11,13 +12,15 @@ import java.util.List;
 
 import static org.donntu.tpr.random.RandomGeneratorConstants.*;
 
+@Getter
 public class CarDistributor {
     private RandomGenerator randomGenerator = new RandomGenerator();
     private Bakery bakery;
-
     private List<Car> cars = new ArrayList<>();
-
     private StoreManager storeManager;
+    private int maxTransactionsCount;
+    private double timePassed;
+    private boolean print;
 
     public CarDistributor(int carsCount, int simultaneousCarLoadingCount, int storesCount) {
         for (int i = 0; i < carsCount; i++) {
@@ -29,26 +32,56 @@ public class CarDistributor {
         bakery = new Bakery(simultaneousCarLoadingCount);
     }
 
-    public void start(double minutes) throws Exception {
-        double lastMinutes = minutes;
+    public void start(int transactionsCount, boolean print) throws Exception {
+        this.maxTransactionsCount = transactionsCount;
+        this.timePassed = 0;
+        this.print = print;
+        bakery.resetWaitingTime();
+        storeManager.resetWaitingTime();
+        resetCarsTransactions();
         redistributeCars();
         double lessRemainingTime;
-        while (lastMinutes > 0) {
+        do {
             lessRemainingTime = getLessRemainingTime();
-            if (lastMinutes < lessRemainingTime) {
-                lessRemainingTime = lastMinutes;
+            if (print) {
+                System.out.printf("-------------------- Прошло %4.2f минуты --------------------\n", lessRemainingTime);
             }
-            System.out.printf("-------------------- Прошло %4.2f минуты --------------------\n", lessRemainingTime);
             subtractTime(lessRemainingTime);
             redistributeCars();
-            lastMinutes -= lessRemainingTime;
+            timePassed += lessRemainingTime;
+        } while (!isAllHaveMaxTransactions() || !isAllActionsCompleted());
+    }
+
+    private boolean isAllHaveMaxTransactions() {
+        for (Car car : cars) {
+            if (car.getTransactionsCount() < this.maxTransactionsCount) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isAllActionsCompleted() {
+        for (Car car : cars) {
+            if (car.getRemainingTime() > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void resetCarsTransactions() {
+        for (Car car : cars) {
+            car.resetTransactions();
         }
     }
 
     private void redistributeCars() throws Exception {
         for (Car car : cars) {
             boolean isRepaired;
-            System.out.print("+ ");
+            if (print) {
+                System.out.print("+ ");
+            }
             if (car.getRemainingTime() <= 0) {
                 isRepaired = car.getStatus() == CarStatus.REPAIRING;
                 CarStatus status = car.nextStatus();
@@ -58,6 +91,13 @@ public class CarDistributor {
                 if (!isRepaired) {
                     switch (status) {
                         case LOADING:
+                            if (car.getTransactionsCount() == maxTransactionsCount) {
+                                car.setStatus(CarStatus.LOAD_WAITING);
+                                if (print) {
+                                    System.out.println("Машина " + car.getId() + " завершила работу");
+                                }
+                                continue;
+                            }
                             if (bakery.isHaveFreeChannel()) {
                                 if (car.getDeliveryMode() == null) {
                                     fillCarParamsForBakery(car);
@@ -66,7 +106,9 @@ public class CarDistributor {
                                 bakery.addCar(car);
                             } else {
                                 car.setStatus(CarStatus.LOAD_WAITING);
-                                car.printStatus();
+                                if (print) {
+                                    car.printStatus();
+                                }
                                 continue;
                             }
                             break;
@@ -91,17 +133,20 @@ public class CarDistributor {
                         case MOVING_TO_BAKERY:
                             car.setDeliveryMode(null);
                             car.setRemainingTime(randomGenerator.getExpY(M_MOVING_S_B));
-                            checkCrash(car);
-                            break;
-                        case LOAD_WAITING:
+                            if (!checkCrash(car)) {
+                                car.addTransaction();
+                            }
                             break;
                         case REPAIRING:
                             break;
                     }
                 }
             }
-            car.printStatus();
+            if (print) {
+                car.printStatus();
+            }
         }
+
     }
 
     private void subtractTime(double minutes) {
@@ -187,6 +232,14 @@ public class CarDistributor {
         } else {
             car.setDeliveryMode(DeliveryMode.TWO_PRODUCT_ONE_STORE);
         }
+    }
+
+    public double getAvgStoreWaitingTime() {
+        return storeManager.getAvgStoreWaitingTime();
+    }
+
+    public double getAvgBakeryWaitingTime() {
+        return bakery.getAvgWaitingTime();
     }
 
 }
