@@ -2,6 +2,7 @@ package org.donntu.tpr.targets;
 
 import lombok.Data;
 import org.donntu.tpr.Car;
+import org.donntu.tpr.Statistics;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -12,13 +13,14 @@ import java.util.Queue;
 public class Store {
     private Queue<Car> queue = new LinkedList<>();
     private Car currentUnloading = null;
-    private double storeWaitingTime = 0;
+
     private String id;
 
     public List<Car> subtractTime(double minutes) {
         List<Car> removed = new ArrayList<>();
         if (currentUnloading != null) {
-            currentUnloading.addCurrentWaitingTimeToTotal();
+            Statistics.getInstance().addCarsWaitingTimeOnStores(currentUnloading.getCurrentWaitingTime());
+            currentUnloading.resetWaitingTime();
             currentUnloading.setRemainingTime(currentUnloading.getRemainingTime() - minutes);
             if (!queue.isEmpty()) {
                 queue.forEach(car -> car.addCurrentWaitingTime(minutes));
@@ -29,7 +31,7 @@ public class Store {
                 currentUnloading = queue.poll();
             }
         } else {
-            storeWaitingTime += minutes;
+            Statistics.getInstance().addStoresDowntime(minutes);
         }
         return removed;
     }
@@ -56,8 +58,5 @@ public class Store {
         this.id = id;
     }
 
-    public void resetWaitTime() {
-        storeWaitingTime = 0;
-    }
 
 }

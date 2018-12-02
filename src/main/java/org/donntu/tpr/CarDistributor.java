@@ -22,22 +22,24 @@ public class CarDistributor {
     private double timePassed;
     private boolean print;
 
-    public CarDistributor(int carsCount, int simultaneousCarLoadingCount, int storesCount) {
+    public CarDistributor(int carsCount, int bakeryChannelsCount, int storesCount) {
         for (int i = 0; i < carsCount; i++) {
             Car car = new Car(CarStatus.LOAD_WAITING);
             car.setId((i + 1) + "");
             cars.add(car);
         }
         storeManager = new StoreManager(storesCount);
-        bakery = new Bakery(simultaneousCarLoadingCount);
+        bakery = new Bakery(bakeryChannelsCount);
     }
 
     public void start(int transactionsCount, boolean print) throws Exception {
         this.maxTransactionsCount = transactionsCount;
         this.timePassed = 0;
         this.print = print;
-        bakery.resetWaitingTime();
-        storeManager.resetWaitingTime();
+        Statistics.getInstance().reset();
+        Statistics.getInstance().setBakeryChannelsCount(bakery.getChannelCount());
+        Statistics.getInstance().setCarsCount(cars.size());
+        Statistics.getInstance().setStoresCount(storeManager.getStoresCount());
         resetCarsTransactions();
         redistributeCars();
         double lessRemainingTime;
@@ -102,7 +104,8 @@ public class CarDistributor {
                                 if (car.getDeliveryMode() == null) {
                                     fillCarParamsForBakery(car);
                                 }
-                                car.addCurrentWaitingTimeToTotal();
+                                Statistics.getInstance().addCarsWaitingTimeOnBakery(car.getCurrentWaitingTime());
+                                car.resetWaitingTime();
                                 bakery.addCar(car);
                             } else {
                                 car.setStatus(CarStatus.LOAD_WAITING);
@@ -170,15 +173,6 @@ public class CarDistributor {
         return false;
     }
 
-    public double getAvgWaitingTime() {
-        double totalWaitingTime = 0;
-        for (Car car : cars) {
-            totalWaitingTime += car.getTotalWaitingTime();
-        }
-        return totalWaitingTime / cars.size();
-    }
-
-
     private void fillCarParamsForBakery(Car car) throws Exception {
         selectDeliveryMode(car);
         selectLoadingTime(car);
@@ -193,7 +187,6 @@ public class CarDistributor {
         }
         return min;
     }
-
 
     private void selectLoadingTime(Car car) throws Exception {
         switch (car.getDeliveryMode()) {
@@ -232,14 +225,6 @@ public class CarDistributor {
         } else {
             car.setDeliveryMode(DeliveryMode.TWO_PRODUCT_ONE_STORE);
         }
-    }
-
-    public double getAvgStoreWaitingTime() {
-        return storeManager.getAvgStoreWaitingTime();
-    }
-
-    public double getAvgBakeryWaitingTime() {
-        return bakery.getAvgWaitingTime();
     }
 
 }

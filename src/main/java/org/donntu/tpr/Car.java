@@ -15,7 +15,6 @@ public class Car {
 
     private String id;
 
-    private double totalWaitingTime = 0;
     private double currentWaitingTime = 0;
 
     private int storeTargetIndex;
@@ -47,14 +46,8 @@ public class Car {
         this.currentWaitingTime += minutes;
     }
 
-    public void addTotalWaitingTime(double minutes) {
-        this.totalWaitingTime += minutes;
-    }
-
-    public void addCurrentWaitingTimeToTotal() {
-        this.totalWaitingTime += currentWaitingTime;
+    public void resetWaitingTime() {
         currentWaitingTime = 0;
-        isQueueWaiting = false;
     }
 
     public void crash(double repairTime) {

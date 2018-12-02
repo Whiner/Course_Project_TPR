@@ -1,6 +1,7 @@
 package org.donntu.tpr.targets;
 
 import org.donntu.tpr.Car;
+import org.donntu.tpr.Statistics;
 import org.donntu.tpr.modes.CarStatus;
 
 import java.util.ArrayList;
@@ -8,15 +9,14 @@ import java.util.List;
 
 public class Bakery {
     private List<Car> loadingCars = new ArrayList<>();
-    private int simultaneousCarLoadingCount;
-    private double waitingTime;
+    private int channelCount;
 
-    public Bakery(int simultaneousCarLoadingCount) {
-        this.simultaneousCarLoadingCount = simultaneousCarLoadingCount;
+    public Bakery(int channelCount) {
+        this.channelCount = channelCount;
     }
 
     public boolean addCar(Car car) {
-        if (loadingCars.size() == simultaneousCarLoadingCount) {
+        if (loadingCars.size() == channelCount) {
             return false;
         } else {
             loadingCars.add(car);
@@ -32,7 +32,7 @@ public class Bakery {
     public List<Car> subtractTime(double minutes) {
         List<Car> removed = new ArrayList<>();
         if (loadingCars.isEmpty()) {
-            waitingTime += minutes;
+            Statistics.getInstance().addBakeryDowntime(minutes);
         } else {
             loadingCars.forEach(car -> {
                 car.subtractTime(minutes);
@@ -46,18 +46,11 @@ public class Bakery {
     }
 
     public boolean isHaveFreeChannel() {
-        return loadingCars.size() < simultaneousCarLoadingCount;
+        return loadingCars.size() < channelCount;
     }
 
-    public int getSimultaneousCarLoadingCount() {
-        return simultaneousCarLoadingCount;
+    public int getChannelCount() {
+        return channelCount;
     }
 
-    public void resetWaitingTime() {
-        this.waitingTime = 0;
-    }
-
-    public double getAvgWaitingTime() {
-        return waitingTime / simultaneousCarLoadingCount;
-    }
 }
