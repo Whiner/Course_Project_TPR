@@ -33,11 +33,11 @@ public class Statistics {
     }
 
     public double getAvgStoresDowntime() {
-        return totalStoresDowntime / storesCount;
+        return totalStoresDowntime / carsCount;
     }
 
     public double getAvgBakeryDowntime() {
-        return totalBakeryDowntime / bakeryChannelsCount;
+        return totalBakeryDowntime / carsCount;
     }
 
     public double getAvgCarsWaitingOnBakery() {
@@ -45,7 +45,7 @@ public class Statistics {
     }
 
     public double getAvgCarsWaitingOnStores() {
-        return carsTotalWaitingTimeOnStores / storesCount / carsCount;
+        return carsTotalWaitingTimeOnStores / carsCount;
     }
 
     public void addBakeryDowntime(double minutes) {

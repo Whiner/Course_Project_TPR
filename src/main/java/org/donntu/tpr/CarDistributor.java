@@ -22,20 +22,21 @@ public class CarDistributor {
     private double timePassed;
     private boolean print;
 
-    public CarDistributor(int carsCount, int bakeryChannelsCount, int storesCount) {
+    public CarDistributor(int bakeryChannelsCount, int storesCount) {
+        storeManager = new StoreManager(storesCount);
+        bakery = new Bakery(bakeryChannelsCount);
+    }
+
+    public void start(int carsCount, int transactionsCount, boolean print) throws Exception {
+        this.maxTransactionsCount = transactionsCount;
+        this.timePassed = 0;
+        this.print = print;
+        cars.clear();
         for (int i = 0; i < carsCount; i++) {
             Car car = new Car(CarStatus.LOAD_WAITING);
             car.setId((i + 1) + "");
             cars.add(car);
         }
-        storeManager = new StoreManager(storesCount);
-        bakery = new Bakery(bakeryChannelsCount);
-    }
-
-    public void start(int transactionsCount, boolean print) throws Exception {
-        this.maxTransactionsCount = transactionsCount;
-        this.timePassed = 0;
-        this.print = print;
         Statistics.getInstance().reset();
         Statistics.getInstance().setBakeryChannelsCount(bakery.getChannelCount());
         Statistics.getInstance().setCarsCount(cars.size());
