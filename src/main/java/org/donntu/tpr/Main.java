@@ -2,19 +2,24 @@ package org.donntu.tpr;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        CarDistributor carDistributor = new CarDistributor(2, 6);
-        int st = 5;
-        int kol = 10;
+        int channelCnt = 2;
+        CarDistributor carDistributor = new CarDistributor(channelCnt, 6);
+        int st = 10;
+        int kol = 20;
+        int trans = 100;
         System.out.println("========================");
-        System.out.printf("|%8s|%8s|%8s|%8s|%8s|\n", "Маш.кол", "Ож.хлебз", "Ож.магаз", "Пр.хлебз", "Пр.магаз");
+        System.out.printf("|%8s|%8s|%8s|%8s|%8s|%8s|\n", "Маш.кол", "Ож.хлебз", "Ож.магаз", "Пр.хлебз", "Пр.магаз", "Интервал");
+        Statistics.getInstance().setChannelCount(channelCnt);
+        Statistics.getInstance().setTransactionsCount(trans);
         for (int i = st; i < st + kol; i++) {
-            carDistributor.start(i, 100, false);
-            System.out.printf("|%8d|%8.2f|%8.2f|%8.2f|%8.2f|\n",
+            carDistributor.start(i, trans, false);
+            System.out.printf("|%8d|%8.2f|%8.2f|%8.2f|%8.2f|%8.2f|\n",
                     i,
                     Statistics.getInstance().getAvgCarsWaitingOnBakery(),
                     Statistics.getInstance().getAvgCarsWaitingOnStores(),
                     Statistics.getInstance().getAvgBakeryDowntime(),
-                    Statistics.getInstance().getAvgStoresDowntime()
+                    Statistics.getInstance().getAvgStoresDowntime(),
+                    Statistics.getInstance().getAvgIntervalWithoutProduct()
             );
 
         }

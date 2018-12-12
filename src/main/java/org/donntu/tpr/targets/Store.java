@@ -13,15 +13,21 @@ import java.util.Queue;
 public class Store {
     private Queue<Car> queue = new LinkedList<>();
     private Car currentUnloading = null;
-
+    private double intervalWithoutProduct = 0;
     private String id;
 
     public List<Car> subtractTime(double minutes) {
         List<Car> removed = new ArrayList<>();
         if (currentUnloading != null) {
             Statistics.getInstance().addCarsWaitingTimeOnStores(currentUnloading.getCurrentWaitingTime());
+            Statistics.getInstance().addIntervalWithoutProduct(intervalWithoutProduct);
+            if (intervalWithoutProduct != 0) {
+                Statistics.getInstance().incIntervalsCount();
+                intervalWithoutProduct = 0;
+            }
             currentUnloading.resetWaitingTime();
             currentUnloading.setRemainingTime(currentUnloading.getRemainingTime() - minutes);
+
             if (!queue.isEmpty()) {
                 queue.forEach(car -> car.addCurrentWaitingTime(minutes));
             }
@@ -32,6 +38,7 @@ public class Store {
             }
         } else {
             Statistics.getInstance().addStoresDowntime(minutes);
+            intervalWithoutProduct += minutes;
         }
         return removed;
     }
