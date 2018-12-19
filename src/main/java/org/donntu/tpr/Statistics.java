@@ -18,40 +18,48 @@ public class Statistics {
     private double totalBakeryDowntime;
     private double carsTotalWaitingTimeOnBakery;
     private double carsTotalWaitingTimeOnStores;
-    private int carsCount;
-    private int bakeryChannelsCount;
-    private int storesCount;
-    private double intervalsWithoutProduct;
+    private int storesDowntimeCount;
+    private int bakeryDowntimeCount;
+    private int storesWaitingCount;
+    private int bakeryWaitingCount;
+    //    private int carsCount;
     private int intervalsCount;
-    private int transactionsCount;
-    private int channelCount;
+    private double intervalsWithoutProduct;
+//    private int channelCount;
+//    private int bakeryChannelsCount;
+//    private int storesCount;
+//    private int transactionsCount;
 
     public void reset() {
         totalStoresDowntime = 0;
         totalBakeryDowntime = 0;
         carsTotalWaitingTimeOnBakery = 0;
         carsTotalWaitingTimeOnStores = 0;
-        carsCount = 0;
-        bakeryChannelsCount = 0;
-        storesCount = 0;
+//        carsCount = 0;
         intervalsCount = 0;
         intervalsWithoutProduct = 0;
+        storesDowntimeCount = 0;
+        bakeryDowntimeCount = 0;
+        storesWaitingCount = 0;
+        bakeryWaitingCount = 0;
+//        bakeryChannelsCount = 0;
+//        storesCount = 0;
     }
 
     public double getAvgStoresDowntime() {
-        return totalStoresDowntime / storesCount / transactionsCount;
+        return totalStoresDowntime / storesDowntimeCount;
     }
 
     public double getAvgBakeryDowntime() {
-        return totalBakeryDowntime / channelCount / transactionsCount;
+        return totalBakeryDowntime / bakeryDowntimeCount;
     }
 
     public double getAvgCarsWaitingOnBakery() {
-        return carsTotalWaitingTimeOnBakery / channelCount / carsCount / transactionsCount;
+        return carsTotalWaitingTimeOnBakery / bakeryWaitingCount;
     }
 
     public double getAvgCarsWaitingOnStores() {
-        return carsTotalWaitingTimeOnStores / carsCount / storesCount / transactionsCount;
+        return carsTotalWaitingTimeOnStores / storesWaitingCount;
     }
 
     public double getAvgIntervalWithoutProduct() {
@@ -81,5 +89,22 @@ public class Statistics {
     public void incIntervalsCount() {
         this.intervalsCount++;
     }
+
+    public void incStoresDowntimeCount() {
+        this.storesDowntimeCount++;
+    }
+
+    public void incBakeryDowntimeCount() {
+        this.bakeryDowntimeCount++;
+    }
+
+    public void incStoresWaitingCount() {
+        this.storesWaitingCount++;
+    }
+
+    public void incBakeryWaitingCount() {
+        this.bakeryWaitingCount++;
+    }
+
 
 }

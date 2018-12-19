@@ -19,6 +19,8 @@ public class Bakery {
         if (loadingCars.size() == channelCount) {
             return false;
         } else {
+            Statistics.getInstance().incBakeryDowntimeCount();
+            Statistics.getInstance().incBakeryWaitingCount();
             loadingCars.add(car);
             car.setStatus(CarStatus.LOADING);
             return true;

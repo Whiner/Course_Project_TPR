@@ -21,6 +21,7 @@ public class Store {
         if (currentUnloading != null) {
             Statistics.getInstance().addCarsWaitingTimeOnStores(currentUnloading.getCurrentWaitingTime());
             Statistics.getInstance().addIntervalWithoutProduct(intervalWithoutProduct);
+            Statistics.getInstance().incStoresWaitingCount();
             if (intervalWithoutProduct != 0) {
                 Statistics.getInstance().incIntervalsCount();
                 intervalWithoutProduct = 0;
@@ -34,6 +35,7 @@ public class Store {
             double remainingTime = currentUnloading.getRemainingTime();
             if (remainingTime <= 0) {
                 removed.add(currentUnloading);
+                currentUnloading.setQueueWaiting(false);
                 currentUnloading = queue.poll();
             }
         } else {
@@ -54,6 +56,7 @@ public class Store {
 
     public void addToQueue(Car car) {
         if (currentUnloading == null) {
+            Statistics.getInstance().incStoresDowntimeCount();
             currentUnloading = car;
         } else {
             queue.offer(car);

@@ -38,9 +38,6 @@ public class CarDistributor {
             cars.add(car);
         }
         Statistics.getInstance().reset();
-        Statistics.getInstance().setBakeryChannelsCount(bakery.getChannelCount());
-        Statistics.getInstance().setCarsCount(cars.size());
-        Statistics.getInstance().setStoresCount(storeManager.getStoresCount());
         resetCarsTransactions();
         redistributeCars();
         double lessRemainingTime;
@@ -53,6 +50,7 @@ public class CarDistributor {
             redistributeCars();
             timePassed += lessRemainingTime;
         } while (!isAllHaveMaxTransactions() || !isAllActionsCompleted());
+        //System.out.println("Среднее время транзакции = " + (timePassed / (carsCount * transactionsCount)));
     }
 
     private boolean isAllHaveMaxTransactions() {
