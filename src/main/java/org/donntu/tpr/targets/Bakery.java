@@ -20,7 +20,6 @@ public class Bakery {
             return false;
         } else {
             Statistics.getInstance().incBakeryDowntimeCount();
-            Statistics.getInstance().incBakeryWaitingCount();
             loadingCars.add(car);
             car.setStatus(CarStatus.LOADING);
             return true;
@@ -33,17 +32,16 @@ public class Bakery {
 
     public List<Car> subtractTime(double minutes) {
         List<Car> removed = new ArrayList<>();
-        if (loadingCars.isEmpty()) {
-            Statistics.getInstance().addBakeryDowntime(minutes);
-        } else {
-            loadingCars.forEach(car -> {
-                car.subtractTime(minutes);
-                if (car.getRemainingTime() <= 0) {
-                    removed.add(car);
-                }
-            });
-            removed.forEach(car -> loadingCars.remove(car));
+        if (isHaveFreeChannel()) {
+            Statistics.getInstance().addBakeryDowntime(minutes * (channelCount - loadingCars.size()));
         }
+        loadingCars.forEach(car -> {
+            car.subtractTime(minutes);
+            if (car.getRemainingTime() <= 0) {
+                removed.add(car);
+            }
+        });
+        removed.forEach(car -> loadingCars.remove(car));
         return removed;
     }
 

@@ -23,8 +23,7 @@ public class Statistics {
     private int storesWaitingCount;
     private int bakeryWaitingCount;
     //    private int carsCount;
-    private int intervalsCount;
-    private double intervalsWithoutProduct;
+
 //    private int channelCount;
 //    private int bakeryChannelsCount;
 //    private int storesCount;
@@ -36,8 +35,7 @@ public class Statistics {
         carsTotalWaitingTimeOnBakery = 0;
         carsTotalWaitingTimeOnStores = 0;
 //        carsCount = 0;
-        intervalsCount = 0;
-        intervalsWithoutProduct = 0;
+
         storesDowntimeCount = 0;
         bakeryDowntimeCount = 0;
         storesWaitingCount = 0;
@@ -62,10 +60,6 @@ public class Statistics {
         return carsTotalWaitingTimeOnStores / storesWaitingCount;
     }
 
-    public double getAvgIntervalWithoutProduct() {
-        return intervalsWithoutProduct / intervalsCount;
-    }
-
     public void addBakeryDowntime(double minutes) {
         this.totalBakeryDowntime += minutes;
     }
@@ -82,13 +76,6 @@ public class Statistics {
         carsTotalWaitingTimeOnStores += minutes;
     }
 
-    public void addIntervalWithoutProduct(double intervalWithoutProduct) {
-        this.intervalsWithoutProduct += intervalWithoutProduct;
-    }
-
-    public void incIntervalsCount() {
-        this.intervalsCount++;
-    }
 
     public void incStoresDowntimeCount() {
         this.storesDowntimeCount++;

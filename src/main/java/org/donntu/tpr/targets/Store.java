@@ -13,34 +13,30 @@ import java.util.Queue;
 public class Store {
     private Queue<Car> queue = new LinkedList<>();
     private Car currentUnloading = null;
-    private double intervalWithoutProduct = 0;
     private String id;
 
     public List<Car> subtractTime(double minutes) {
         List<Car> removed = new ArrayList<>();
         if (currentUnloading != null) {
-            Statistics.getInstance().addCarsWaitingTimeOnStores(currentUnloading.getCurrentWaitingTime());
-            Statistics.getInstance().addIntervalWithoutProduct(intervalWithoutProduct);
-            Statistics.getInstance().incStoresWaitingCount();
-            if (intervalWithoutProduct != 0) {
-                Statistics.getInstance().incIntervalsCount();
-                intervalWithoutProduct = 0;
-            }
-            currentUnloading.resetWaitingTime();
-            currentUnloading.setRemainingTime(currentUnloading.getRemainingTime() - minutes);
-
+            currentUnloading.subtractTime(minutes);
             if (!queue.isEmpty()) {
                 queue.forEach(car -> car.addCurrentWaitingTime(minutes));
             }
             double remainingTime = currentUnloading.getRemainingTime();
             if (remainingTime <= 0) {
+                Statistics.getInstance().addCarsWaitingTimeOnStores(currentUnloading.getCurrentWaitingTime());
+                Statistics.getInstance().incStoresWaitingCount();
+                Statistics.getInstance().incStoresDowntimeCount();
+
+                currentUnloading.resetWaitingTime();
                 removed.add(currentUnloading);
-                currentUnloading.setQueueWaiting(false);
                 currentUnloading = queue.poll();
+                if (currentUnloading != null) {
+                    currentUnloading.setQueueWaiting(false);
+                }
             }
         } else {
             Statistics.getInstance().addStoresDowntime(minutes);
-            intervalWithoutProduct += minutes;
         }
         return removed;
     }
@@ -56,7 +52,6 @@ public class Store {
 
     public void addToQueue(Car car) {
         if (currentUnloading == null) {
-            Statistics.getInstance().incStoresDowntimeCount();
             currentUnloading = car;
         } else {
             queue.offer(car);
