@@ -79,25 +79,22 @@ public class CarDistributor {
 
     private void redistributeCars() throws Exception {
         for (Car car : cars) {
-            boolean isRepairing;
+            boolean isRepaired;
             if (print) {
                 System.out.print("+ ");
             }
             if (car.getRemainingTime() <= 0) {
-                isRepairing = car.getStatus() == CarStatus.REPAIRING;
+                isRepaired = car.getStatus() == CarStatus.REPAIRING;
                 CarStatus status = car.nextStatus();
                 if (status == null) {
                     throw new Exception("Статус не указан для машины " + car.getId());
                 }
-                if (!isRepairing) {
+                if (!isRepaired) {
                     switch (status) {
                         case LOADING:
                             if (car.getTransactionsCount() == maxTransactionsCount) {
-                                car.setStatus(CarStatus.LOAD_WAITING);
-                                if (print) {
-                                    System.out.println("Машина " + car.getId() + " завершила работу");
-                                }
-                                continue;
+                                car.setStatus(CarStatus.STOPPED);
+                                break;
                             }
                             if (bakery.isHaveFreeChannel()) {
                                 if (car.getDeliveryMode() == null) {
@@ -140,6 +137,8 @@ public class CarDistributor {
                             car.addTransaction();
                             break;
                         case REPAIRING:
+                            break;
+                        case STOPPED:
                             break;
                     }
                 }

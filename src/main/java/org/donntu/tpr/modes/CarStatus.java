@@ -8,7 +8,7 @@ public enum CarStatus {
     MOVING_TO_SECOND_STORE,
     UNLOADING_SECOND,
     MOVING_TO_BAKERY,
-    REPAIRING
-
+    REPAIRING,
+    STOPPED;
 
 }

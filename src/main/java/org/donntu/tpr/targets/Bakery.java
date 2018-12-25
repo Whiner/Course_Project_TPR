@@ -26,10 +26,6 @@ public class Bakery {
         }
     }
 
-    public boolean isOnLoading(Car car) {
-        return loadingCars.contains(car);
-    }
-
     public List<Car> subtractTime(double minutes) {
         List<Car> removed = new ArrayList<>();
         if (isHaveFreeChannel()) {
@@ -49,8 +45,5 @@ public class Bakery {
         return loadingCars.size() < channelCount;
     }
 
-    public int getChannelCount() {
-        return channelCount;
-    }
 
 }

@@ -90,6 +90,8 @@ public class Car {
                 status = targetBeforeCrash;
                 remainingTime = remainingTimeBeforeCrash;
                 break;
+            case STOPPED:
+                break;
         }
         return status;
     }
@@ -139,6 +141,9 @@ public class Car {
                 break;
             case REPAIRING:
                 System.out.printf("Машина %s ремонтируется (%s). Осталось %4.2f\n", id, status, remainingTime);
+                break;
+            case STOPPED:
+                System.out.println("Машина " + id + " завершила работу");
                 break;
         }
     }
