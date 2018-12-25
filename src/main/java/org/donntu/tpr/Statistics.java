@@ -22,26 +22,16 @@ public class Statistics {
     private int bakeryDowntimeCount;
     private int storesWaitingCount;
     private int bakeryWaitingCount;
-    //    private int carsCount;
-
-//    private int channelCount;
-//    private int bakeryChannelsCount;
-//    private int storesCount;
-//    private int transactionsCount;
 
     public void reset() {
         totalStoresDowntime = 0;
         totalBakeryDowntime = 0;
         carsTotalWaitingTimeOnBakery = 0;
         carsTotalWaitingTimeOnStores = 0;
-//        carsCount = 0;
-
         storesDowntimeCount = 0;
         bakeryDowntimeCount = 0;
         storesWaitingCount = 0;
         bakeryWaitingCount = 0;
-//        bakeryChannelsCount = 0;
-//        storesCount = 0;
     }
 
     public double getAvgStoresDowntime() {
@@ -76,7 +66,6 @@ public class Statistics {
         carsTotalWaitingTimeOnStores += minutes;
     }
 
-
     public void incStoresDowntimeCount() {
         this.storesDowntimeCount++;
     }
@@ -92,6 +81,5 @@ public class Statistics {
     public void incBakeryWaitingCount() {
         this.bakeryWaitingCount++;
     }
-
 
 }

@@ -44,6 +44,4 @@ public class Bakery {
     public boolean isHaveFreeChannel() {
         return loadingCars.size() < channelCount;
     }
-
-
 }

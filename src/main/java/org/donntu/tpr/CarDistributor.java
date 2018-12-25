@@ -50,7 +50,6 @@ public class CarDistributor {
             redistributeCars();
             timePassed += lessRemainingTime;
         } while (!isAllHaveMaxTransactions() || !isAllActionsCompleted());
-        //System.out.println("Среднее время транзакции = " + (timePassed / (carsCount * transactionsCount)));
     }
 
     private boolean isAllHaveMaxTransactions() {

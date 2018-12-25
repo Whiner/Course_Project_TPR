@@ -130,7 +130,7 @@ public class Criteria {
         for (int i = 0; i < table.length; i++) {
             double ac = 0;
             for (j = 0; j < table[i].length; j++) {
-                newTable[i][j] = Math.pow(((maxList.get(j) - table[i][j]) / (maxList.get(j) - minList.get(j)) - 1), 2);
+                newTable[i][j] = Math.abs(((maxList.get(j) - table[i][j]) / (maxList.get(j) - minList.get(j)) - 1));
                 ac += newTable[i][j];
             }
             newTable[i][j] = ac;
