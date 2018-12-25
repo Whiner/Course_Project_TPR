@@ -7,15 +7,13 @@ import java.util.Map;
 
 public class Criteria {
     private Double[][] table;
+    private List<Double> minList;
+    private List<Double> maxList;
 
     public Criteria(Double[][] table) {
         this.table = table;
-    }
-
-    public void addit(double... koef) {
-        System.out.println("Метод аддитивной свертки");
-        List<Double> minList = new ArrayList<>();
-        List<Double> maxList = new ArrayList<>();
+        minList = new ArrayList<>();
+        maxList = new ArrayList<>();
         for (int i = 0; i < table[0].length; i++) {
             double min = 10E9;
             double max = -10E9;
@@ -30,6 +28,10 @@ public class Criteria {
             minList.add(min);
             maxList.add(max);
         }
+    }
+
+    public void addit(double... koef) {
+        System.out.println("Метод аддитивной свертки");
 
         Double[][] newTable = new Double[table.length][table[0].length + 1];
         int j;
@@ -42,9 +44,9 @@ public class Criteria {
             newTable[i][j] = ac;
         }
 
-        int optimalAlternative = findOptimalAlternativeByDop(newTable);
+        int optimalAlternative = findOptimalAlternativeByDop(newTable, true);
         print(newTable);
-        System.out.printf("Оптимальное решение %4.2f (%d)\n", newTable[optimalAlternative][newTable[0].length - 1], optimalAlternative + 1);
+        System.out.printf("Оптимальное решение %4.2f (A%d)\n", newTable[optimalAlternative][newTable[0].length - 1], optimalAlternative + 1);
     }
 
     public void multiplic(double... koef) {
@@ -70,12 +72,12 @@ public class Criteria {
             }
             newTable[i][j] = mul;
         }
-        int optimalAlternative = findOptimalAlternativeByDop(newTable);
+        int optimalAlternative = findOptimalAlternativeByDop(newTable, true);
         print(newTable);
-        System.out.printf("Оптимальное решение %4.2f (%d)\n", newTable[optimalAlternative][newTable[0].length - 1], optimalAlternative + 1);
+        System.out.printf("Оптимальное решение %4.2f (A%d)\n", newTable[optimalAlternative][newTable[0].length - 1], optimalAlternative + 1);
     }
 
-    public void mainCrit(int mainIndex, double persent) {
+    public void mainCrit(int mainIndex, double percent) {
         System.out.println("Метод главного критерия");
         System.out.println("Главный критерий - С" + (mainIndex + 1));
         Map<Integer, Double> optimal = new HashMap<>();
@@ -86,7 +88,7 @@ public class Criteria {
                 for (int j = 0; j < table.length; j++) {
                     criteria.get(i)[j] = table[j][i];
                 }
-                optimal.put(i, table[findOptimalAlternative(criteria.get(i))][i]);
+                optimal.put(i, table[minIndex(criteria.get(i))][i]);
             }
         }
         boolean found = false;
@@ -94,7 +96,7 @@ public class Criteria {
         do {
             System.out.println("------------------");
             for (Integer integer : optimal.keySet()) {
-                double value = optimal.get(integer) * persent;
+                double value = optimal.get(integer) * percent;
                 System.out.printf("C%d < %4.2f\n", integer + 1, value);
                 optimal.put(integer, value);
             }
@@ -118,6 +120,88 @@ public class Criteria {
         }
 
         System.out.printf("Оптимальное решение - %d\n", optimalAlternative.get(index) + 1);
+    }
+
+    public void targetProgramming() {
+        System.out.println("Метод целевого программирования");
+
+        Double[][] newTable = new Double[table.length][table[0].length + 1];
+        int j;
+        for (int i = 0; i < table.length; i++) {
+            double ac = 0;
+            for (j = 0; j < table[i].length; j++) {
+                newTable[i][j] = Math.pow(((maxList.get(j) - table[i][j]) / (maxList.get(j) - minList.get(j)) - 1), 2);
+                ac += newTable[i][j];
+            }
+            newTable[i][j] = ac;
+        }
+
+        print(newTable);
+        int optimalAlternative = findOptimalAlternativeByDop(newTable, false);
+        System.out.printf("Оптимальное решение %4.2f (A%d)\n", newTable[optimalAlternative][newTable[0].length - 1], optimalAlternative + 1);
+    }
+
+    public void ustupok(int... priority) {
+        System.out.println("Метод последовательных уступок");
+
+        List<List<Integer>> alternatives = new ArrayList<>();
+
+        for (int i = 1; i < priority.length; i++) {
+            Double[] crit = getCrit(priority[i - 1]);
+            int minIndex = minIndex(crit);
+            Double min = table[minIndex][priority[i - 1]];
+            System.out.printf("C%d -> min = %4.2f (A%d)\n", priority[i - 1] + 1, min, minIndex + 1);
+            double ustupka = Math.round(min / 2) + 1;
+            System.out.printf("z%d = %4.2f\n", i, ustupka);
+            double ogr = min + ustupka;
+            System.out.printf("C%d <= %4.2f + %4.2f = %4.2f\n",
+                    priority[i - 1] + 1,
+                    min,
+                    ustupka,
+                    ogr);
+
+            System.out.print("Альтернативы, удовлетворяющие данному ограничению: ");
+            alternatives.add(findSuitableAlternative(getCrit(priority[i - 1]), ogr));
+            System.out.print("Альтернативы, удовлетворяющие всем ограничениям: ");
+            List<Integer> commonAlternatives = findCommonAlternatives(alternatives);
+            for (Integer commonAlternative : commonAlternatives) {
+                System.out.print("A" + (commonAlternative + 1) + "; ");
+            }
+            System.out.println();
+            System.out.println("___________________");
+        }
+
+    }
+
+    public void garantResult() {
+        System.out.println("Метод гарантированного результата");
+
+        Double[][] newTable = new Double[table.length][table[0].length + 1];
+        int j;
+        for (int i = 0; i < table.length; i++) {
+            double min = 1e9;
+            for (j = 0; j < table[i].length; j++) {
+                newTable[i][j] = (maxList.get(j) - table[i][j]) / (maxList.get(j) - minList.get(j));
+                if (newTable[i][j] < min) {
+                    min = newTable[i][j];
+                }
+            }
+            newTable[i][j] = min;
+
+        }
+
+
+        print(newTable);
+        int optimalAlternative = findOptimalAlternativeByDop(newTable, true);
+        System.out.printf("Оптимальное решение %4.2f (A%d)\n", newTable[optimalAlternative][newTable[0].length - 1], optimalAlternative + 1);
+    }
+
+    private Double[] getCrit(int index) {
+        Double[] crit = new Double[table.length];
+        for (int i = 0; i < table.length; i++) {
+            crit[i] = table[i][index];
+        }
+        return crit;
     }
 
     private List<Integer> findSuitableAlternative(Double[] column, Double lessThan) {
@@ -155,15 +239,25 @@ public class Criteria {
         return common;
     }
 
-    private int findOptimalAlternativeByDop(Double[][] newTable) {
-        double max = -1e9;
+    private int findOptimalAlternativeByDop(Double[][] newTable, boolean bigger) {
+        double v;
+        if (bigger) {
+            v = -1e9;
+        } else {
+            v = 1e9;
+        }
         int index = -1;
         for (int i = 0; i < newTable.length; i++) {
             for (int j = 0; j < newTable[i].length; j++) {
                 if (j == newTable[i].length - 1) {
-                    if (max < newTable[i][j]) {
+                    if (bigger && v < newTable[i][j]) {
                         index = i;
-                        max = newTable[i][j];
+                        v = newTable[i][j];
+                    }
+
+                    if (!bigger && v > newTable[i][j]) {
+                        index = i;
+                        v = newTable[i][j];
                     }
                 }
             }
@@ -171,7 +265,7 @@ public class Criteria {
         return index;
     }
 
-    private int findOptimalAlternative(Double[] crit) {
+    private int minIndex(Double[] crit) {
         double min = 1e9;
         int index = -1;
         for (int i = 0; i < crit.length; i++) {
@@ -195,4 +289,5 @@ public class Criteria {
             System.out.println();
         }
     }
+
 }

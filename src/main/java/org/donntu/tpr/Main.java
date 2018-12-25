@@ -32,6 +32,9 @@ public class Main {
         Criteria criteria = new Criteria(table);
         //criteria.addit(0.2, 0.2, 0.1, 0.1, 0.4);
         //criteria.multiplic(0.2, 0.2, 0.1, 0.1, 0.4);
-        criteria.mainCrit(4, 1.2);
+        //criteria.mainCrit(4, 1.2);
+        //criteria.targetProgramming();
+        //criteria.ustupok(4,0,1,2,3);
+        criteria.garantResult();
     }
 }
